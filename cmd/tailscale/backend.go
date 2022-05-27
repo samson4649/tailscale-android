@@ -65,6 +65,9 @@ const (
 	loginMethodWeb    = "web"
 )
 
+// define the default coordination server
+var coordinationServer = "https://login.tailscale.com"
+
 // googleDnsServers are used on ChromeOS, where an empty VpnBuilder DNS setting results
 // in erasing the platform DNS servers. The developer docs say this is not supposed to happen,
 // but nonetheless it does.
@@ -146,10 +149,14 @@ func newBackend(dataDir string, jvm *jni.JVM, appCtx jni.Object, store *stateSto
 }
 
 func (b *backend) Start(notify func(n ipn.Notify)) error {
-	b.backend.SetNotifyCallback(notify)
-	return b.backend.Start(ipn.Options{
-		StateKey: "ipn-android",
-	})
+    b.backend.SetNotifyCallback(notify)
+    prefs := ipn.NewPrefs()
+    prefs.ControlURL = coordinationServer
+    opts := ipn.Options{
+    StateKey: "ipn-android",
+        UpdatePrefs: prefs,
+    }
+    return b.backend.Start(opts)
 }
 
 func (b *backend) LinkChange() {
